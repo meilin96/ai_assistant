@@ -314,4 +314,6 @@ ai_assistant/
 
 ## License
 
-This repository includes an MIT license in [`LICENSE`](C:\Users\Nero\Desktop\Godot\godot-4.5.2-stable\modules\ai_assistant\LICENSE).
+This repository is licensed under Apache License 2.0. See [`LICENSE`](C:\Users\Nero\Desktop\Godot\godot-4.5.2-stable\modules\ai_assistant\LICENSE).
+
+This applies to the code in this repository. Godot engine upstream remains under its own MIT license.
