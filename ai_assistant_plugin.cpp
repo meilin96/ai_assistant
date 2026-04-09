@@ -3,64 +3,58 @@
 #include "ai_assistant_plugin.h"
 #include "ai_assistant_panel.h"
 
-#include "editor/docks/scene_tree_dock.h"
-#include "scene/gui/popup_menu.h"
+#include "editor/inspector/editor_context_menu_plugin.h"
 
-void AIAssistantPlugin::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("_hook_scene_tree_menu"), &AIAssistantPlugin::_hook_scene_tree_menu);
-}
+class AIAssistantSceneTreeContextMenuPlugin : public EditorContextMenuPlugin {
+	GDCLASS(AIAssistantSceneTreeContextMenuPlugin, EditorContextMenuPlugin);
 
-// Called deferred once the editor is fully set up so SceneTreeDock::singleton
-// is guaranteed to be valid.
-void AIAssistantPlugin::_hook_scene_tree_menu() {
-	SceneTreeDock *dock = SceneTreeDock::get_singleton();
-	if (!dock) {
-		return;
-	}
-	PopupMenu *ctx_menu = dock->get_context_menu();
-	if (!ctx_menu) {
-		return;
-	}
-	// about_to_popup fires every time the menu is shown, AFTER SceneTreeDock
-	// has already filled it.  We append our item there so it always appears last.
-	ctx_menu->connect("about_to_popup",
-			callable_mp(this, &AIAssistantPlugin::_on_scene_menu_about_to_popup));
-	ctx_menu->connect("id_pressed",
-			callable_mp(this, &AIAssistantPlugin::_on_scene_menu_id_pressed));
-}
+	AIAssistantPanel *panel = nullptr;
 
-void AIAssistantPlugin::_on_scene_menu_about_to_popup() {
-	SceneTreeDock *dock = SceneTreeDock::get_singleton();
-	if (!dock) {
-		return;
+protected:
+	static void _bind_methods() {
+		ClassDB::bind_method(D_METHOD("_on_mention_selected", "selection"), &AIAssistantSceneTreeContextMenuPlugin::_on_mention_selected);
 	}
-	PopupMenu *menu = dock->get_context_menu();
-	if (!menu) {
-		return;
-	}
-	// SceneTreeDock calls menu->clear() at the start of _tree_rmb, so our
-	// previously-added item is already gone – just append fresh.
-	menu->add_separator();
-	menu->add_item(TTR("Mention in AI Assistant"), AI_MENU_MENTION_ID);
-}
 
-void AIAssistantPlugin::_on_scene_menu_id_pressed(int p_id) {
-	if (p_id != AI_MENU_MENTION_ID) {
-		return;
+public:
+	virtual void get_options(const Vector<String> &p_paths) override {
+		if (p_paths.is_empty()) {
+			return;
+		}
+
+		add_context_menu_item(TTR("Mention in AI Assistant"), callable_mp(this, &AIAssistantSceneTreeContextMenuPlugin::_on_mention_selected), Ref<Texture2D>());
 	}
-	if (panel) {
-		panel->insert_mention_of_selected_node();
+
+protected:
+	void _on_mention_selected(const Variant &p_selection) {
+		(void)p_selection;
+		if (panel) {
+			panel->insert_mention_of_selected_node();
+		}
 	}
-}
+
+public:
+	void set_panel(AIAssistantPanel *p_panel) {
+		panel = p_panel;
+	}
+};
+
+void AIAssistantPlugin::_bind_methods() {}
 
 AIAssistantPlugin::AIAssistantPlugin() {
 	panel = memnew(AIAssistantPanel);
 	add_control_to_dock(DOCK_SLOT_RIGHT_UL, panel);
 
-	// Defer the scene-tree hook until the editor is fully initialised.
-	call_deferred("_hook_scene_tree_menu");
+	Ref<AIAssistantSceneTreeContextMenuPlugin> typed_plugin = memnew(AIAssistantSceneTreeContextMenuPlugin);
+	typed_plugin->set_panel(panel);
+	scene_tree_menu_plugin = typed_plugin;
+	add_context_menu_plugin(EditorContextMenuPlugin::CONTEXT_SLOT_SCENE_TREE, scene_tree_menu_plugin);
 }
 
-AIAssistantPlugin::~AIAssistantPlugin() {}
+AIAssistantPlugin::~AIAssistantPlugin() {
+	if (scene_tree_menu_plugin.is_valid()) {
+		remove_context_menu_plugin(scene_tree_menu_plugin);
+		scene_tree_menu_plugin.unref();
+	}
+}
 
 #endif // TOOLS_ENABLED

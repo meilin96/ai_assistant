@@ -96,7 +96,7 @@ String AISystemPrompt::get_base_prompt() {
 	p += "- add_root_node(node) - Sets a node as the root of a NEW scene (only use when no scene is open)\n";
 	p += "- get_editor_interface().get_editor_undo_redo() - Returns the EditorUndoRedoManager for undo/redo support\n";
 	p += "- get_editor_interface().get_script_editor() - Returns the ScriptEditor\n";
-	p += "- get_editor_interface().get_resource_file_system() - Returns the EditorFileSystem\n";
+	p += "- get_editor_interface().get_resource_filesystem() - Returns the EditorFileSystem\n";
 	p += "- IMPORTANT: Do NOT use set_edited_scene_root() - it does not exist. Use add_root_node() to create a new scene.\n";
 	p += "- IMPORTANT: Do NOT use get_resource_file_system() - the correct method is get_resource_filesystem() (no underscore between file and system).\n";
 	p += "- IMPORTANT: NOTIFICATION_RESIZED does not exist in Node2D. For window resize, use get_viewport().size_changed signal or just call queue_redraw() in _process().\n";

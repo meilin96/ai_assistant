@@ -735,7 +735,7 @@ void AIAssistantPanel::_on_meta_clicked(const Variant &p_meta) {
 				AI_LOG("Code saved to: " + save_path);
 
 				// Trigger rescan.
-				EditorInterface::get_singleton()->get_resource_file_system()->scan();
+				EditorInterface::get_singleton()->get_resource_filesystem()->scan();
 			} else {
 				_append_message("System", "Failed to save code to: " + save_path, Color(1.0, 0.4, 0.4));
 			}
@@ -1107,9 +1107,9 @@ void AIAssistantPanel::_stream_thread_func() {
 		String error_body;
 		while (client->get_status() == HTTPClient::STATUS_BODY) {
 			client->poll();
-			PackedByteArray chunk = client->read_response_body_chunk();
-			if (chunk.size() > 0) {
-				error_body += String::utf8((const char *)chunk.ptr(), chunk.size());
+			PackedByteArray error_chunk = client->read_response_body_chunk();
+			if (error_chunk.size() > 0) {
+				error_body += String::utf8((const char *)error_chunk.ptr(), error_chunk.size());
 			}
 			OS::get_singleton()->delay_usec(10000);
 		}
@@ -1135,10 +1135,10 @@ void AIAssistantPanel::_stream_thread_func() {
 		}
 
 		client->poll();
-		PackedByteArray chunk = client->read_response_body_chunk();
+		PackedByteArray response_chunk = client->read_response_body_chunk();
 
-		if (chunk.size() > 0) {
-			buffer += String::utf8((const char *)chunk.ptr(), chunk.size());
+		if (response_chunk.size() > 0) {
+			buffer += String::utf8((const char *)response_chunk.ptr(), response_chunk.size());
 
 			while (true) {
 				int event_end = buffer.find("\n\n");
@@ -1168,10 +1168,10 @@ void AIAssistantPanel::_stream_thread_func() {
 
 					stream_mutex.lock();
 					if (!thinking_delta.is_empty()) {
-						StreamChunk chunk;
-						chunk.text = thinking_delta;
-						chunk.is_thinking = true;
-						stream_chunk_queue.push_back(chunk);
+						StreamChunk queued_chunk;
+						queued_chunk.text = thinking_delta;
+						queued_chunk.is_thinking = true;
+						stream_chunk_queue.push_back(queued_chunk);
 						stream_thinking_accumulated += thinking_delta;
 					}
 					if (!content_delta.is_empty()) {
@@ -1186,18 +1186,18 @@ void AIAssistantPanel::_stream_thread_func() {
 									remaining = remaining.substr(close_pos + 8);
 									stream_inside_think_tag = false;
 									if (!think_part.is_empty()) {
-										StreamChunk chunk;
-										chunk.text = think_part;
-										chunk.is_thinking = true;
-										stream_chunk_queue.push_back(chunk);
+										StreamChunk queued_chunk;
+										queued_chunk.text = think_part;
+										queued_chunk.is_thinking = true;
+										stream_chunk_queue.push_back(queued_chunk);
 										stream_thinking_accumulated += think_part;
 									}
 								} else {
 									// Still inside think tag.
-									StreamChunk chunk;
-									chunk.text = remaining;
-									chunk.is_thinking = true;
-									stream_chunk_queue.push_back(chunk);
+									StreamChunk queued_chunk;
+									queued_chunk.text = remaining;
+									queued_chunk.is_thinking = true;
+									stream_chunk_queue.push_back(queued_chunk);
 									stream_thinking_accumulated += remaining;
 									remaining = "";
 								}
@@ -1209,18 +1209,18 @@ void AIAssistantPanel::_stream_thread_func() {
 									remaining = remaining.substr(open_pos + 7);
 									stream_inside_think_tag = true;
 									if (!before.is_empty()) {
-										StreamChunk chunk;
-										chunk.text = before;
-										chunk.is_thinking = false;
-										stream_chunk_queue.push_back(chunk);
+										StreamChunk queued_chunk;
+										queued_chunk.text = before;
+										queued_chunk.is_thinking = false;
+										stream_chunk_queue.push_back(queued_chunk);
 										stream_accumulated += before;
 									}
 								} else {
 									// Normal content.
-									StreamChunk chunk;
-									chunk.text = remaining;
-									chunk.is_thinking = false;
-									stream_chunk_queue.push_back(chunk);
+									StreamChunk queued_chunk;
+									queued_chunk.text = remaining;
+									queued_chunk.is_thinking = false;
+									stream_chunk_queue.push_back(queued_chunk);
 									stream_accumulated += remaining;
 									remaining = "";
 								}

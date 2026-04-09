@@ -87,8 +87,8 @@ bool AIImageGenerator::save_base64_as_texture(const String &p_base64_data, const
 	f->store_buffer(png_data.ptr(), png_data.size());
 	f.unref();
 
-	// Trigger reimport.
-	EditorInterface::get_singleton()->get_resource_file_system()->scan();
+		// Trigger reimport.
+		EditorInterface::get_singleton()->get_resource_filesystem()->scan();
 
 	print_line("[Godot AI] Image saved: " + p_save_path);
 	return true;

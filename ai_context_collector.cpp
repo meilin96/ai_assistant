@@ -126,7 +126,7 @@ String AIContextCollector::get_selected_nodes_info() const {
 
 String AIContextCollector::get_project_structure() const {
 #ifdef TOOLS_ENABLED
-	EditorFileSystem *efs = EditorInterface::get_singleton()->get_resource_file_system();
+	EditorFileSystem *efs = EditorInterface::get_singleton()->get_resource_filesystem();
 	if (!efs) {
 		return "File system not available.";
 	}

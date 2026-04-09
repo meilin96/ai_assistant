@@ -41,8 +41,8 @@ bool AIAudioGenerator::save_audio_bytes(const PackedByteArray &p_data, const Str
 	f->store_buffer(p_data.ptr(), p_data.size());
 	f.unref();
 
-	// Trigger reimport.
-	EditorInterface::get_singleton()->get_resource_file_system()->scan();
+		// Trigger reimport.
+		EditorInterface::get_singleton()->get_resource_filesystem()->scan();
 
 	print_line("[Godot AI] Audio saved: " + p_save_path);
 	return true;
